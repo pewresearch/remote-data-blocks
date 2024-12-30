@@ -6,6 +6,10 @@ use RemoteDataBlocks\WpdbStorage\DataSourceCrud;
 
 class AirtableIntegration {
 	public static function init(): void {
+		add_action( 'init', [ __CLASS__, 'register_blocks' ], 10, 0 );
+	}
+
+	public static function register_blocks(): void {
 		$data_source_configs = DataSourceCrud::get_configs_by_service( REMOTE_DATA_BLOCKS_AIRTABLE_SERVICE );
 
 		foreach ( $data_source_configs as $config ) {
