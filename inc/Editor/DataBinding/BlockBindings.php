@@ -106,61 +106,6 @@ class BlockBindings {
 		return $block_type_args;
 	}
 
-	/**
-	 * Load possible query input overrides for a block binding. Allowed overrides
-	 * are defined in the query configuration. The block editor determines if an
-	 * override is applied.
-	 */
-	private static function apply_query_input_overrides( array $input_variables, array $overrides, string $block_name ): array {
-		$resolved_overrides = [];
-
-		foreach ( $overrides as $input_var_name => $override ) {
-			if ( empty( $override['source'] ?? '' ) || empty( $override['sourceType'] ?? '' ) ) {
-				continue;
-			}
-
-			$override_value = '';
-
-			switch ( $override['sourceType'] ) {
-				// Source the input variable override from a query variable.
-				case 'page':
-				case 'query_var':
-					$override_value = get_query_var( $override['source'], '' );
-					break;
-			}
-
-			if ( ! empty( $override_value ) ) {
-				$resolved_overrides[ $input_var_name ] = $override_value;
-			}
-		}
-
-		/**
-		 * Filter the resolved query input overrides for a block binding.
-		 *
-		 * @param array  $resolved_overrides The resolved query input overrides.
-		 * @param array  $input_variables The original query input variables.
-		 * @param string $block_name The block name.
-		 */
-		$resolved_overrides = apply_filters(
-			'remote_data_blocks_query_input_overrides',
-			$resolved_overrides,
-			$input_variables,
-			$block_name
-		);
-
-		return array_merge( $input_variables, $resolved_overrides );
-	}
-
-	private static function get_query_input( array $block_context ): array {
-		$block_name = $block_context['blockName'];
-		$query_input = $block_context['queryInput'];
-		$overrides = $block_context['queryInputOverrides'] ?? [];
-
-		$query_input = self::apply_query_input_overrides( $query_input, $overrides, $block_name );
-
-		return $query_input;
-	}
-
 	public static function execute_query( array $block_context, string $operation_name ): array|null {
 		$block_name = $block_context['blockName'];
 		$block_config = ConfigStore::get_block_configuration( $block_name );
@@ -171,15 +116,49 @@ class BlockBindings {
 
 		try {
 			$query = $block_config['queries'][ ConfigRegistry::DISPLAY_QUERY_KEY ];
-			$query_input = self::get_query_input( $block_context );
-			$query_results = $query->execute( $query_input );
 
-			if ( is_wp_error( $query_results ) ) {
-				self::log_error( 'Error executing query for block binding: ' . $query_results->get_error_message(), $block_name, $operation_name );
+			/**
+			 * Filter the query input overrides for a block binding.
+			 *
+			 * @param array $input_variables The original query input variables.
+			 * @param array<string> $enabled_overrides The names of overrides that have been enabled for the current block.
+			 * @param string $block_name The current block name.
+			 * @param array $block_context The block context.
+			 * @return array The filtered query input variables.
+			 */
+			$query_input = apply_filters(
+				'remote_data_blocks_query_input_variables',
+				$block_context['queryInput'] ?? [],
+				$block_context['enabledOverrides'] ?? [],
+				$block_context['blockName'],
+				$block_context
+			);
+
+			$query_response = $query->execute( $query_input );
+
+			/**
+			 * Filter the query response for a block binding.
+			 *
+			 * @param array $query_results The original query response.
+			 * @param array<string> $enabled_overrides The names of overrides that have been enabled for the current block.
+			 * @param string $block_name The current block name.
+			 * @param array $block_context The block context.
+			 * @return array|WP_Error The filtered query response.
+			 */
+			$query_response = apply_filters(
+				'remote_data_blocks_query_response',
+				$query_response,
+				$block_context['enabledOverrides'] ?? [],
+				$block_context['blockName'],
+				$block_context
+			);
+
+			if ( is_wp_error( $query_response ) ) {
+				self::log_error( 'Error executing query for block binding: ' . $query_response->get_error_message(), $block_name, $operation_name );
 				return null;
 			}
 
-			return $query_results;
+			return $query_response;
 		} catch ( \Exception $e ) {
 			self::log_error( 'Unexpected exception for block binding: ' . $e->getMessage(), $block_name, $operation_name );
 			return null;
