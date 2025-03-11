@@ -10,7 +10,7 @@ import {
 import { usePatterns } from '@/blocks/remote-data-container/hooks/usePatterns';
 import { getRemoteDataResultValue } from '@/utils/remote-data';
 
-interface ItemListProps {
+export interface ItemListProps {
 	blockName: string;
 	hasNextPage: boolean;
 	loading: boolean;
