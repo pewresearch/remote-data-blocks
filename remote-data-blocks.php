@@ -16,6 +16,12 @@ namespace RemoteDataBlocks;
 
 defined( 'ABSPATH' ) || exit();
 
+// Check if the plugin is already loaded, if so, return early to prevent duplicate plugin instances.
+if ( defined( 'REMOTE_DATA_BLOCKS__LOADED' ) ) {
+	return;
+}
+
+define( 'REMOTE_DATA_BLOCKS__LOADED', true );
 define( 'REMOTE_DATA_BLOCKS__PLUGIN_ROOT', __FILE__ );
 define( 'REMOTE_DATA_BLOCKS__PLUGIN_DIRECTORY', untrailingslashit( plugin_dir_path( __FILE__ ) ) );
 define( 'REMOTE_DATA_BLOCKS__PLUGIN_VERSION', '0.9.1' );
@@ -51,6 +57,9 @@ Integrations\VipBlockDataApi\VipBlockDataApi::init();
 
 // REST endpoints
 REST\RemoteDataController::init();
+
+// Fire action to indicate that the plugin is loaded
+do_action( 'remote_data_blocks_loaded' );
 
 // Plugin developers: If you need to register additional code for testing, you
 // can do so here, e.g.:
