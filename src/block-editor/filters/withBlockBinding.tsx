@@ -23,6 +23,12 @@ interface BoundBlockEditProps {
 	setAttributes: ( attributes: RemoteDataInnerBlockAttributes ) => void;
 }
 
+// This prop is provided by the `withPreviewIndex` filter, which is bundled with
+// the Remote Data Template block.
+interface BlockEditWithPreviewIndex {
+	previewIndex?: number;
+}
+
 function BoundBlockEdit( props: BoundBlockEditProps ) {
 	const { attributes, availableBindings, blockName, remoteDataName, setAttributes } = props;
 	const existingBindings = attributes.metadata?.bindings ?? {};
@@ -78,9 +84,11 @@ function BoundBlockEdit( props: BoundBlockEditProps ) {
 }
 
 export const withBlockBinding = createHigherOrderComponent( BlockEdit => {
-	return ( props: BlockEditProps< RemoteDataInnerBlockAttributes > ) => {
-		const { attributes, context, name, setAttributes } = props;
-		const { remoteData, index } = useRemoteDataContext( context );
+	return (
+		props: BlockEditProps< RemoteDataInnerBlockAttributes > & BlockEditWithPreviewIndex
+	) => {
+		const { attributes, context, name, previewIndex: index = 0, setAttributes } = props;
+		const { remoteData } = useRemoteDataContext( context );
 		const availableBindings = getBlockAvailableBindings( remoteData?.blockName ?? '' );
 		const hasAvailableBindings = Boolean( Object.keys( availableBindings ).length );
 

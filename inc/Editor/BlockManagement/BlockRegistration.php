@@ -7,7 +7,6 @@ defined( 'ABSPATH' ) || exit();
 use RemoteDataBlocks\Editor\Assets\Assets;
 use RemoteDataBlocks\Telemetry\TracksTelemetry;
 use RemoteDataBlocks\Editor\BlockPatterns\BlockPatterns;
-use RemoteDataBlocks\Editor\DataBinding\BlockBindings;
 use RemoteDataBlocks\REST\RemoteDataController;
 use function register_block_type;
 
@@ -45,8 +44,10 @@ class BlockRegistration {
 
 	public static function register_helper_blocks(): void {
 		// Remote data HTML block - used to render HTML content in the absence of a proper binding.
-		$remote_data_html_block_path = REMOTE_DATA_BLOCKS__PLUGIN_DIRECTORY . '/build/blocks/remote-html';
-		register_block_type( $remote_data_html_block_path );
+		register_block_type( REMOTE_DATA_BLOCKS__PLUGIN_DIRECTORY . '/build/blocks/remote-html' );
+
+		// Remote data template - used to render remote data collections.
+		register_block_type( REMOTE_DATA_BLOCKS__PLUGIN_DIRECTORY . '/build/blocks/remote-data-template' );
 	}
 
 	public static function register_container_blocks(): void {
@@ -89,7 +90,6 @@ class BlockRegistration {
 			'availableBindings' => $available_bindings,
 			'availableOverrides' => $config['overrides'] ?? [],
 			'instructions' => $config['instructions'],
-			'loop' => $config['loop'],
 			'name' => $block_name,
 			'dataSourceType' => ConfigStore::get_data_source_type( $block_name ),
 			'patterns' => $config['patterns'],
@@ -103,7 +103,6 @@ class BlockRegistration {
 
 		$block_options = [
 			'name' => $block_name,
-			'render_callback' => [ BlockBindings::class, 'remote_data_block_render_callback' ],
 			'title' => $config['title'],
 		];
 
