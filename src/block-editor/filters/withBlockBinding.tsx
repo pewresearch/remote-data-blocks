@@ -2,7 +2,7 @@ import { InspectorControls } from '@wordpress/block-editor';
 import { BlockConfiguration, BlockEditProps } from '@wordpress/blocks';
 import { PanelBody } from '@wordpress/components';
 import { createHigherOrderComponent } from '@wordpress/compose';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
 import { BlockBindingControls } from '@/blocks/remote-data-container/components/BlockBindingControls';
 import { useRemoteDataContext } from '@/blocks/remote-data-container/hooks/useRemoteDataContext';
@@ -12,7 +12,7 @@ import {
 	PATTERN_OVERRIDES_CONTEXT_KEY,
 } from '@/config/constants';
 import { getBoundBlockClassName, getMismatchedAttributes } from '@/utils/block-binding';
-import { getBlockAvailableBindings } from '@/utils/localized-block-data';
+import { getBlockAvailableBindings, getBlockTitle } from '@/utils/localized-block-data';
 
 interface BoundBlockEditProps {
 	attributes: RemoteDataInnerBlockAttributes;
@@ -20,6 +20,7 @@ interface BoundBlockEditProps {
 	blockName: string;
 	children: JSX.Element;
 	remoteDataName: string;
+	remoteDataTitle: string;
 	setAttributes: ( attributes: RemoteDataInnerBlockAttributes ) => void;
 }
 
@@ -30,7 +31,14 @@ interface BlockEditWithPreviewIndex {
 }
 
 function BoundBlockEdit( props: BoundBlockEditProps ) {
-	const { attributes, availableBindings, blockName, remoteDataName, setAttributes } = props;
+	const {
+		attributes,
+		availableBindings,
+		blockName,
+		remoteDataName,
+		remoteDataTitle,
+		setAttributes,
+	} = props;
 	const existingBindings = attributes.metadata?.bindings ?? {};
 
 	function removeBinding( target: string ) {
@@ -67,7 +75,9 @@ function BoundBlockEdit( props: BoundBlockEditProps ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Remote Data', 'remote-data-blocks' ) }>
+				<PanelBody
+					title={ sprintf( __( 'Remote Data Block: %s', 'remote-data-blocks' ), remoteDataTitle ) }
+				>
 					<BlockBindingControls
 						attributes={ attributes }
 						availableBindings={ availableBindings }
@@ -130,12 +140,16 @@ export const withBlockBinding = createHigherOrderComponent( BlockEdit => {
 			return <BlockEdit { ...props } attributes={ mergedAttributes } />;
 		}
 
+		// lookup the title of the remote data block
+		const remoteBlockTitle = getBlockTitle( remoteData?.blockName );
+
 		return (
 			<BoundBlockEdit
 				attributes={ mergedAttributes }
 				availableBindings={ availableBindings }
 				blockName={ name }
 				remoteDataName={ remoteData?.blockName ?? '' }
+				remoteDataTitle={ remoteBlockTitle }
 				setAttributes={ setAttributes }
 			>
 				<BlockEdit { ...props } attributes={ mergedAttributes } />
