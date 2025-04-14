@@ -219,3 +219,9 @@ remote-data-blocks-inline-field {
 .components-modal__content.has-scrolled-content:not(.hide-header) .components-modal__header {
 	border: none;
 }
+
+// Mirror the Gutenberg helper text style for the RDB block
+.rdb-block-helper-text {
+	font-size: 0.75rem;
+	color: rgb(117, 117, 117);
+}
