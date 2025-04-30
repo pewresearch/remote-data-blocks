@@ -4,6 +4,7 @@
 import { useBlockProps } from '@wordpress/block-editor';
 import { BlockEditProps } from '@wordpress/blocks';
 import { Placeholder } from '@wordpress/components';
+import { blockDefault } from '@wordpress/icons';
 
 import { useRemoteDataContext } from '@/blocks/remote-data-container/hooks/useRemoteDataContext';
 import { __ } from '@/utils/i18n';
@@ -15,6 +16,18 @@ export function Edit( props: BlockEditProps< RemoteDataPaginationBlockAttributes
 	const blockProps = useBlockProps();
 
 	const { remoteData } = useRemoteDataContext( context );
+
+	if ( ! remoteData?.blockName ) {
+		return (
+			<Placeholder
+				label={ __( 'Remote Data Pagination' ) }
+				icon={ blockDefault }
+				instructions={ __(
+					'This block must be placed inside a remote data block. This block will be ignored as currently configured.'
+				) }
+			/>
+		);
+	}
 
 	if ( ! remoteData?.pagination ) {
 		return (

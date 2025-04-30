@@ -6,7 +6,6 @@ import {
 import { BlockInstance } from '@wordpress/blocks';
 import { useSelect } from '@wordpress/data';
 import { useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
 
 import { ItemPreview } from '@/blocks/remote-data-template/components/item-preview/ItemPreview';
 import { LoopTemplateInnerBlocks } from '@/blocks/remote-data-template/components/loop-template/LoopTemplateInnerBlocks';
@@ -29,10 +28,6 @@ export function LoopTemplate( props: LoopTemplateProps ) {
 		select => select( blockEditorStore ).getBlocksByClientId( clientId ),
 		[ clientId ]
 	);
-
-	if ( ! remoteData.results.length ) {
-		return <p>{ __( 'No results found.' ) }</p>;
-	}
 
 	// To avoid flicker when switching active block contexts, a preview is rendered
 	// for each block context, but the preview for the active block context is hidden.

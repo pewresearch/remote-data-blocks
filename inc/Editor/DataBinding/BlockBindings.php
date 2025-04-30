@@ -200,8 +200,24 @@ class BlockBindings {
 		}
 	}
 
+	public static function should_render_empty_result( WP_Block $block ): bool {
+		$block_context = $block->context[ self::$context_name ] ?? [];
+		// Re-execute the query to get the latest results, rather than using the
+		// stale results from the block.
+		$query_response = self::execute_queries( $block_context, [] );
+
+		if ( is_wp_error( $query_response ) ) {
+			return false;
+		}
+
+		// Only give back true if there are no results
+		return isset( $query_response['results'] ) && empty( $query_response['results'] );
+	}
+
 	public static function get_pagination_links( WP_Block $block ): array {
 		$block_context = $block->context[ self::$context_name ] ?? [];
+		// Re-execute the query to get the latest results, rather than using the
+		// stale results from the block.
 		$query_response = self::execute_queries( $block_context, [] );
 
 		if ( is_wp_error( $query_response ) ) {
