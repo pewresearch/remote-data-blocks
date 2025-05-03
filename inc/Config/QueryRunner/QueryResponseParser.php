@@ -13,15 +13,18 @@ defined( 'ABSPATH' ) || exit();
  */
 final class QueryResponseParser {
 	/**
-	 * Get a field value based on its type. This should be a primitive type
+	 * Get a field value based on its type. This should be a primitive type.
 	 *
 	 * @param mixed $field_value The field value.
 	 * @param string $type_name The field type.
-	 * @param mixed  $default_value The default value.
 	 * @return mixed The sanitized field value.
 	 */
-	private function get_field_value( mixed $field_value, string $type_name, mixed $default_value = null ): mixed {
-		$sanitized_value = Sanitizer::sanitize_primitive_type( $type_name, $field_value ?? $default_value );
+	private function get_field_value( mixed $field_value, string $type_name ): mixed {
+		if ( null === $field_value ) {
+			return null;
+		}
+
+		$sanitized_value = Sanitizer::sanitize_primitive_type( $type_name, $field_value );
 
 		// Some fields get formatted based on their type.
 		switch ( $type_name ) {
@@ -55,20 +58,24 @@ final class QueryResponseParser {
 	 */
 	public function parse( mixed $data, array $schema ): mixed {
 		$json_obj = $data instanceof JsonObject ? $data : new JsonObject( $data );
-		$default_path = ( $schema['is_collection'] ?? false ) ? '$[*]' : '$';
+		$is_collection = $schema['is_collection'] ?? false;
+		$default_path = $is_collection ? '$[*]' : '$';
 		$value = $json_obj->get( $schema['path'] ?? $default_path );
 
 		if ( is_array( $schema['type'] ?? null ) ) {
 			$value = $this->parse_response_objects( $value, $schema['type'] ) ?? [];
 		} elseif ( is_string( $schema['type'] ?? null ) ) {
-			$value = array_map( function ( $item ) use ( $schema ) {
-				return $this->get_field_value( $item, $schema['type'], $schema['default_value'] ?? null );
-			}, $value );
+			if ( $is_collection ) {
+				$value = array_map( function ( $item ) use ( $schema ) {
+					return $this->get_field_value( $item ?? $schema['default_value'] ?? null, $schema['type'] );
+				}, $value );
+			} else {
+				$value = [ $this->get_field_value( $value[0] ?? $schema['default_value'] ?? null, $schema['type'] ) ];
+			}
 		} else {
 			$value = [];
 		}
 
-		$is_collection = $schema['is_collection'] ?? false;
 		return $is_collection ? $value : $value[0] ?? null;
 	}
 
