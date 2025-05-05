@@ -7,10 +7,10 @@ use RemoteDataBlocks\Editor\DataBinding\BlockBindings;
 // $content (string): The block default content.
 // $block (WP_Block): The block instance.
 
-$should_render_empty_result = BlockBindings::should_render_empty_result( $block );
+$should_render_fallback_content = BlockBindings::should_render_fallback_content( $block->context, $attributes );
 
-// Skip the rendering if the block's results are not empty.
-if ( ! $should_render_empty_result ) {
+// The fallback content should only be rendered if the query errors out, or if the query returns no results.
+if ( ! $should_render_fallback_content ) {
 	return null;
 }
 

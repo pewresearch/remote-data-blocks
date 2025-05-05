@@ -204,18 +204,26 @@ class BlockBindings {
 		}
 	}
 
-	public static function should_render_empty_result( WP_Block $block ): bool {
-		$block_context = $block->context[ self::$context_name ] ?? [];
+	public static function should_render_fallback_content( array $context, array $attributes ): bool {
+		$block_context = $context[ self::$context_name ] ?? [];
 		// Re-execute the query to get the latest results, rather than using the
 		// stale results from the block.
 		$query_response = self::execute_queries( $block_context, [] );
 
+		// If there is an error, and it's the error block variation, the fallback
+		// content should be rendered.
 		if ( is_wp_error( $query_response ) ) {
-			return false;
+			return 'error' === $attributes['mode'];
 		}
 
-		// Only give back true if there are no results
-		return isset( $query_response['results'] ) && empty( $query_response['results'] );
+		// If there are no results, and it's the empty block variation, the fallback
+		// content should be rendered.
+		if ( isset( $query_response['results'] ) && empty( $query_response['results'] ) ) {
+			return 'empty' === $attributes['mode'];
+		}
+
+		// If there are results, the fallback content should not be rendered.
+		return false;
 	}
 
 	public static function get_pagination_links( WP_Block $block ): array {
